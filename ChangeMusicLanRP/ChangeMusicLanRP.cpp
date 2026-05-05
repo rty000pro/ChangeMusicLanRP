@@ -6,13 +6,15 @@
 
 namespace fs = std::filesystem;
 
-
-const std::string baseDir = "C:/Program Files (x86)/Steam/steamapps/workshop/content/4000/3310371040";
+std::string BaseSteam = "C:/Program Files (x86)/Steam";
+std::string BaseGmod = "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod";
+const std::string baseDir = BaseSteam + "/steamapps/workshop/content/4000/3310371040";
 const std::string extractedPath = baseDir + "/extracted";
 const std::string gmaPath = baseDir + "/gmpublisher.gma";
-const std::string gmadExe = "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/gmad.exe";
-fs::path BaseFolder = "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/garrysmod/addons/ChangerMusicLanRP/sound/lanrp/music";
-fs::path SearchFolderLANRPMUSIC = "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/garrysmod/addons/ChangerMusicLanRP";
+const std::string gmadExe = BaseGmod + "/bin/gmad.exe";
+fs::path BaseFolder = BaseGmod + "/garrysmod/addons/ChangerMusicLanRP";
+fs::path MusicFolder = BaseFolder / "/sound/lanrp/music";
+
 void IfTrueDirectoryFile() {
     if (fs::exists(extractedPath)) {
         std::cout << "Deleting trash folder..." << std::endl;
@@ -38,10 +40,10 @@ void ReadMusicDirectory()
 {
     std::cout << "Checking files..." << std::endl;
     std::string SearchDir;
-    SearchDir = BaseFolder.string();
+    SearchDir = MusicFolder.string();
     if (!fs::exists(SearchDir)) {
         OpenGMAD();
-        SearchDir = "C:/Program Files (x86)/Steam/steamapps/workshop/content/4000/3310371040/extracted/sound/lanrp/music/";
+        SearchDir = baseDir + "/extracted/sound/lanrp/music/";
     }
     try {
         for (const auto& entry : fs::directory_iterator(SearchDir)) {
@@ -65,10 +67,10 @@ void CreateDirMusic()
 {
     std::cout << "Create folder..." << std::endl;
 
-    if (fs::create_directories(BaseFolder)) 
+    if (fs::create_directories(MusicFolder)) 
     {
         for (auto pozor : { "calm","epic","other","tense" }) {
-            fs::create_directories(BaseFolder / pozor);
+            fs::create_directories(MusicFolder / pozor);
         }
         std::cout << "Created folder Successfuly!" << std::endl;
         
@@ -81,8 +83,8 @@ void CreateDirMusic()
 void RemoveAllFolder() 
 {
     std::cout << "Cleaning music folders..." << std::endl;
-    if (fs::exists(SearchFolderLANRPMUSIC)) {
-        for (const auto& entry : fs::directory_iterator(SearchFolderLANRPMUSIC)) {
+    if (fs::exists(BaseFolder)) {
+        for (const auto& entry : fs::directory_iterator(BaseFolder)) {
             if (fs::is_directory(entry.path())) {
                 for (const auto& file : fs::directory_iterator(entry.path())) {
                     fs::remove_all(file.path());
@@ -99,7 +101,7 @@ void AddMusicInDirMusic(fs::path NameFolder, fs::path PathNameMusicFile)
             std::cerr << "Error: Source file does not exist!" << std::endl;
             return;
         }
-        fs::path destination = BaseFolder / NameFolder / PathNameMusicFile.filename();
+        fs::path destination = MusicFolder / NameFolder / PathNameMusicFile.filename();
         CreateDirMusic();
 
         fs::copy_file(PathNameMusicFile, destination, fs::copy_options::overwrite_existing);
@@ -109,14 +111,39 @@ void AddMusicInDirMusic(fs::path NameFolder, fs::path PathNameMusicFile)
         std::cerr << "Filesystem Error: " << e.what() << std::endl;
     }
 }
+void ManualInstallationBase(std::string BaseGmodSet, std::string BaseSteamSet)
+{
+    BaseGmod = BaseGmodSet;
+    std::cout << "Path Gmod [" + BaseGmod + "]  installating" << std::endl;
+    BaseSteam = BaseSteamSet;
+    std::cout << "Path Steam [" + BaseSteam + "]  installating" << std::endl;
+}
+void DeleteMusicInDirMusic(std::string NameMusicalFile)
+{
+    for (const auto& entry : fs::directory_iterator(MusicFolder))
+    {
+        if (entry.path().filename() == NameMusicalFile) {
+            if (fs::remove(NameMusicalFile))
+            {
+                std::cout << NameMusicalFile << " Deleted" << std::endl;
+            }
+            else
+            {
+                std::cout << "Error! No file!" << std::endl;
+            }
+            
+        }
+    }
+}
 void InterfaceConsole()
 {
     bool ExitProgram = true;
     while (ExitProgram)
     {
-        std::cout << "0 - Create Folder LanRP Music.\n1 - Add Music.\n2 - Remove Music Folder.\n3 - See what music is currently installed.\n4 - Exit programm." << std::endl;
+        std::cout << "0 - Create Folder LanRP Music.\n1 - Add Music.\n2 - Remove Music\n3 - Remove Music Folder\n4 - See what music is currently installed.\n5 - Change Path to Gmod and Steam\n6 - Exit programm.\nTotal path Gmod and Steam:\n" << BaseGmod << std::endl << BaseSteam << std::endl;
         int ChoiceInterface;
-        std::string NameType, PathMusicFile;
+        std::string NameType, PathMusicFile,NameMusicFile;
+        std::string PathGmod, PathSteam;
         std::cout << "Enter:";
         std::cin >> ChoiceInterface;
         switch (ChoiceInterface)
@@ -138,18 +165,28 @@ void InterfaceConsole()
             if (!PathMusicFile.empty() && (PathMusicFile.back() == '"' || PathMusicFile.back() == '\'')) {
                 PathMusicFile.pop_back();
             }
-            std::cout << "Debug: Trying to open [" << PathMusicFile << "]" << std::endl;
-
             AddMusicInDirMusic(NameType, PathMusicFile);
             break;
         }
         case 2:
-            RemoveAllFolder();
+            std::cout << "Please enter name Music File:";
+            std::cin >> NameMusicFile;
+            DeleteMusicInDirMusic(NameMusicFile);
             break;
         case 3:
-            ReadMusicDirectory();
+            RemoveAllFolder();
             break;
         case 4:
+            ReadMusicDirectory();
+            break;
+        case 5:
+            std::cout << "Enter path gmod:";
+            std::cin >> PathGmod;
+            std::cout << "Enter path steam:";
+            std::cin >> PathSteam;
+            ManualInstallationBase(PathGmod, PathSteam);
+            break;
+        case 6:
             ExitProgram = false;
             IfTrueDirectoryFile();
             break;
