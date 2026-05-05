@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="ChangeMusicLanRP/ChangeMusicLanRP.vcxproj" />
+  <Project Path="ChangeMusicLanRP/ChangeMusicLanRP.vcxproj" Id="59c05fe2-c946-409e-8570-cf451b9ba709" />
 </Solution>

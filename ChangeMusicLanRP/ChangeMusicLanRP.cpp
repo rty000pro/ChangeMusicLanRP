@@ -2,6 +2,7 @@
 #include <filesystem> 
 #include <cstdlib>
 #include <string>
+#include <windows.h>
 
 namespace fs = std::filesystem;
 
@@ -107,6 +108,6 @@ int main() {
     //CompilingGMADFile(); Временно не работает пока не разберусь с  models/gredwitch/bombs/500lbgp.sw.vtx
 
 
-
+    Sleep(30000);
     return 0;
 }
