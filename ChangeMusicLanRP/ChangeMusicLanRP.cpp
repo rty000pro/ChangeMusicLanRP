@@ -193,6 +193,7 @@ void InterfaceConsole()
     
     while (ExitProgram)
     {
+        system("cls");
         CoutStatusInterface();
         int ChoiceInterface;
         std::string NameType, PathMusicFile,NameMusicFile;
@@ -203,6 +204,7 @@ void InterfaceConsole()
         {
         case 0:
             CreateDirMusic();
+            Sleep(500);
             break;
         case 1: {
 
@@ -220,18 +222,24 @@ void InterfaceConsole()
                 PathMusicFile.pop_back();
             }
             AddMusicInDirMusic(NameType, PathMusicFile);
+            Sleep(1500);
             break;
         }
         case 2:
             std::cout << "Please enter name Music File:";
             std::cin >> NameMusicFile;
             DeleteMusicInDirMusic(NameMusicFile);
+            Sleep(1000);
             break;
         case 3:
             RemoveAllFolder();
+            Sleep(1000);
             break;
         case 4:
             ReadMusicDirectory();
+            std::cout << "Please press Enter to close!" << std::endl;
+            std::cin.get();
+            std::cin.get();//Костыль
             break;
         case 5:
             std::cout << "Enter path gmod:";
@@ -239,6 +247,7 @@ void InterfaceConsole()
             std::cout << "Enter path steam:";
             std::cin >> PathSteam;
             ManualInstallationBase(PathGmod, PathSteam);
+            Sleep(2000);
             break;
         case 6:
             ExitProgram = false;
