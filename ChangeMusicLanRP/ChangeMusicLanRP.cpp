@@ -149,18 +149,20 @@ void ManualInstallationBase(std::string BaseGmodSet, std::string BaseSteamSet)
 }
 void DeleteMusicInDirMusic(std::string NameMusicalFile)
 {
-    for (const auto& entry : fs::directory_iterator(MusicFolder))
+    std::error_code ec;
+
+    for (const auto& entry : fs::recursive_directory_iterator(MusicFolder))
     {
-        if (entry.path().filename() == NameMusicalFile) {
-            if (fs::remove(NameMusicalFile))
+        if (fs::is_regular_file(entry) && entry.path().filename() == NameMusicalFile)
+        {
+            if (fs::remove(entry.path(), ec))
             {
                 SuccesfullyWarning(NameMusicalFile + " Deleted");
             }
             else
             {
-                ErrorWarning("Error! No file!");
+                ErrorWarning("Error! " + ec.message());
             }
-            
         }
     }
 }
@@ -225,12 +227,16 @@ void InterfaceConsole()
             Sleep(1500);
             break;
         }
-        case 2:
-            std::cout << "Please enter name Music File:";
-            std::cin >> NameMusicFile;
+        case 2: {
+            std::cout << "Enter music file name to delete: ";
+            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            std::getline(std::cin, NameMusicFile);
+            NameMusicFile.erase(0, NameMusicFile.find_first_not_of(' '));
+            NameMusicFile.erase(NameMusicFile.find_last_not_of(' ') + 1);
             DeleteMusicInDirMusic(NameMusicFile);
-            Sleep(1000);
+            Sleep(1200);
             break;
+        }
         case 3:
             RemoveAllFolder();
             Sleep(1000);
@@ -261,6 +267,7 @@ void InterfaceConsole()
     return;
 }
 int main() {
+    SetConsoleCtrlHandler(ConsoleHandler, TRUE);
     InterfaceConsole();
     return 0;
 }
