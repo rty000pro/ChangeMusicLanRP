@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <string>
 #include <windows.h>
+#include <map>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -15,6 +17,7 @@ const std::string gmaPath = baseDir + "/gmpublisher.gma";
 const std::string gmadExe = BaseGmod + "/bin/gmad.exe";
 std::string BaseFolder = BaseGmod + "/garrysmod/addons/ChangerMusicLanRP";
 std::string MusicFolder = BaseFolder + "/sound/lanrp/music";
+std::map<std::string,std::vector<std::string>> list_music;
 
 void ErrorWarning(std::string error)
 {
@@ -55,31 +58,48 @@ void OpenGMAD() {
         ErrorWarning("Error: Extraction failed!");
     }
 }
-void ReadMusicDirectory()
+void InitListMusic()
 {
-    std::cout << "Checking files..." << std::endl;
-    std::string SearchDir;
-    SearchDir = MusicFolder;
-    if (!fs::exists(SearchDir)) {
-        OpenGMAD();
-        SearchDir = baseDir + "/extracted/sound/lanrp/music/";
+    std::cout << "Init list..." << std::endl;
+    std::string TypeMusic;
+    OpenGMAD();
+    std::string SearchDir = baseDir + "/extracted/sound/lanrp/music/";
+    for (const auto& entry : fs::directory_iterator(SearchDir)) {
+        if (entry.is_directory()) {
+            TypeMusic = "\033[1m" + entry.path().filename().string() + "\033[0m";
+            if (fs::is_empty(entry.path())) {
+                continue;
+            }
+            for (const auto& file : fs::directory_iterator(entry.path())) {
+                list_music[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
+            }
+        }
     }
-    try {
+    if (fs::exists(MusicFolder))
+    {
+        SearchDir = MusicFolder;
         for (const auto& entry : fs::directory_iterator(SearchDir)) {
             if (entry.is_directory()) {
-                std::cout << entry.path().filename().string() << ":" << std::endl;
+                TypeMusic = "\033[1m" + entry.path().filename().string() + "\033[0m";
                 if (fs::is_empty(entry.path())) {
-                    std::cout << "   (empty)" << std::endl;
                     continue;
                 }
                 for (const auto& file : fs::directory_iterator(entry.path())) {
-                    std::cout << "   " << file.path().filename().string() << std::endl;
+                    list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
                 }
             }
         }
     }
-    catch (const fs::filesystem_error& e) {
-        ErrorWarning("Scan error: " + std::string(e.what()));
+    IfTrueDirectoryFile();
+}
+void ReadMusicDirectory()
+{
+    std::cout << "Read list..." << std::endl;
+    for (const auto& [section, songs] : list_music) {
+        std::cout << section << std::endl;
+        for (const auto& song : songs) {
+            std::cout << "   " << song << std::endl;
+        }
     }
 }
 void CreateDirMusic()
@@ -192,7 +212,7 @@ void CoutStatusInterface()
 }
 void InterfaceConsole()
 {
-    
+    InitListMusic();
     while (ExitProgram)
     {
         system("cls");
@@ -201,9 +221,27 @@ void InterfaceConsole()
         std::string NameType, PathMusicFile,NameMusicFile;
         std::string PathGmod, PathSteam;
         std::cout << "Enter:";
-        std::cin >> ChoiceInterface;
+        if (!(std::cin >> ChoiceInterface)) {
+            std::cout << "Error: Please enter a number!" << std::endl;
+            std::cin.clear();
+            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            Sleep(1000);
+            continue;
+        }
+        if (ChoiceInterface > 6) 
+        {
+            std::cout << "Error: There is no such command" << std::endl;
+            std::cin.clear();
+            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            Sleep(1000);
+            continue;
+        }
         switch (ChoiceInterface)
         {
+        default :
+            std::cout << "Error! There is no such command" << std::endl;
+            Sleep(500);
+            break;
         case 0:
             CreateDirMusic();
             Sleep(500);
@@ -258,9 +296,6 @@ void InterfaceConsole()
         case 6:
             ExitProgram = false;
             IfTrueDirectoryFile();
-            break;
-        default:
-            std::cout << "Error! code:01" << std::endl;
             break;
         }
     }
