@@ -18,6 +18,7 @@ const std::string gmadExe = BaseGmod + "/bin/gmad.exe";
 std::string BaseFolder = BaseGmod + "/garrysmod/addons/ChangerMusicLanRP";
 std::string MusicFolder = BaseFolder + "/sound/lanrp/music";
 std::map<std::string,std::vector<std::string>> list_music;
+std::map<std::string, std::vector<std::string>> list_music_gma;
 
 void ErrorWarning(std::string error)
 {
@@ -34,15 +35,6 @@ void IfTrueDirectoryFile() {
         std::string cmd = "rd /s /q \"" + extractedPath + "\"";
         std::system(cmd.c_str());
     }
-}
-BOOL WINAPI ConsoleHandler(DWORD signal) {
-    if (signal == CTRL_CLOSE_EVENT) {
-        ExitProgram = false;
-        IfTrueDirectoryFile();
-        Sleep(1000);
-        return TRUE;
-    }
-    return FALSE;
 }
 void OpenGMAD() {
     IfTrueDirectoryFile();
@@ -66,12 +58,13 @@ void InitListMusic()
     std::string SearchDir = baseDir + "/extracted/sound/lanrp/music/";
     for (const auto& entry : fs::directory_iterator(SearchDir)) {
         if (entry.is_directory()) {
-            TypeMusic = "\033[1m" + entry.path().filename().string() + "\033[0m";
+            TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
             if (fs::is_empty(entry.path())) {
                 continue;
             }
             for (const auto& file : fs::directory_iterator(entry.path())) {
                 list_music[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
+                list_music_gma[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
             }
         }
     }
@@ -80,7 +73,7 @@ void InitListMusic()
         SearchDir = MusicFolder;
         for (const auto& entry : fs::directory_iterator(SearchDir)) {
             if (entry.is_directory()) {
-                TypeMusic = "\033[1m" + entry.path().filename().string() + "\033[0m";
+                TypeMusic = "\033[1m" + entry.path().filename().string()  + ":\033[0m";
                 if (fs::is_empty(entry.path())) {
                     continue;
                 }
@@ -91,6 +84,28 @@ void InitListMusic()
         }
     }
     IfTrueDirectoryFile();
+}
+void InitNewList()
+{
+    list_music.clear();
+    for (const auto& [section, songs] : list_music_gma) {
+        for (const auto& song : songs) {
+            list_music[section].push_back("\033[90m" + song + ":\033[0m");
+        }
+    }
+    std::string TypeMusic;
+    std::string SearchDir = MusicFolder;
+    for (const auto& entry : fs::directory_iterator(SearchDir)) {
+        if (entry.is_directory()) {
+            TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
+            if (fs::is_empty(entry.path())) {
+                continue;
+            }
+            for (const auto& file : fs::directory_iterator(entry.path())) {
+                list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
+            }
+        }
+    }
 }
 void ReadMusicDirectory()
 {
@@ -159,6 +174,7 @@ void AddMusicInDirMusic(fs::path NameFolder, fs::path PathNameMusicFile)
         ErrorWarning("Error! You not create LanRP Folder");
         return;
     }
+    InitNewList();
 }
 void ManualInstallationBase(std::string BaseGmodSet, std::string BaseSteamSet)
 {
@@ -171,6 +187,15 @@ void DeleteMusicInDirMusic(std::string NameMusicalFile)
 {
     std::error_code ec;
 
+    for (auto it = list_music.begin(); it != list_music.end(); ++it) {
+        auto& vec = it->second;
+        auto vec_it = std::find(vec.begin(), vec.end(), NameMusicalFile);
+
+        if (vec_it != vec.end()) {
+            vec.erase(vec_it);
+            break;
+        }
+    }
     for (const auto& entry : fs::recursive_directory_iterator(MusicFolder))
     {
         if (fs::is_regular_file(entry) && entry.path().filename() == NameMusicalFile)
@@ -185,6 +210,7 @@ void DeleteMusicInDirMusic(std::string NameMusicalFile)
             }
         }
     }
+    InitNewList();
 }
 void CoutStatusInterface()
 {
@@ -199,13 +225,13 @@ void CoutStatusInterface()
         ? "\033[32mFolder exists!\033[0m"
         : "\033[31mFolder not found!\033[0m";
     std::cout << "--- ChangeMusicLanRP ---\n"
-        << "0 - Create Folder LanRP Music - " << StatusFolderLanRP << "\n"
-        << "1 - Add Music.\n"
-        << "2 - Remove Music\n"
-        << "3 - Remove Music Folder\n"
-        << "4 - See what music is currently installed.\n"
-        << "5 - Change Path to Gmod and Steam\n"
-        << "6 - Exit program.\n"
+        << "1 - Create Folder LanRP Music - " << StatusFolderLanRP << "\n"
+        << "2 - Add Music.\n"
+        << "3 - Remove Music\n"
+        << "4 - Remove Music Folder\n"
+        << "5 - See what music is currently installed.\n"
+        << "6 - Change Path to Gmod and Steam\n"
+        << "0 - Exit program.\n"
         << "Total path Gmod and Steam:\n"
         << StatusGmodPath << "\n"
         << StatusSteamPath << std::endl;
@@ -242,11 +268,11 @@ void InterfaceConsole()
             std::cout << "Error! There is no such command" << std::endl;
             Sleep(500);
             break;
-        case 0:
+        case 1:
             CreateDirMusic();
             Sleep(500);
             break;
-        case 1: {
+        case 2: {
 
             std::cout << "Enter category (calm,epic,tense,other): ";
             std::cin >> NameType;
@@ -265,7 +291,7 @@ void InterfaceConsole()
             Sleep(1500);
             break;
         }
-        case 2: {
+        case 3: {
             std::cout << "Enter music file name to delete: ";
             std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
             std::getline(std::cin, NameMusicFile);
@@ -275,17 +301,17 @@ void InterfaceConsole()
             Sleep(1200);
             break;
         }
-        case 3:
+        case 4:
             RemoveAllFolder();
             Sleep(1000);
             break;
-        case 4:
+        case 5:
             ReadMusicDirectory();
             std::cout << "Please press Enter to close!" << std::endl;
             std::cin.get();
             std::cin.get();//Костыль
             break;
-        case 5:
+        case 6:
             std::cout << "Enter path gmod:";
             std::cin >> PathGmod;
             std::cout << "Enter path steam:";
@@ -293,16 +319,14 @@ void InterfaceConsole()
             ManualInstallationBase(PathGmod, PathSteam);
             Sleep(2000);
             break;
-        case 6:
+        case 0:
             ExitProgram = false;
-            IfTrueDirectoryFile();
             break;
         }
     }
     return;
 }
 int main() {
-    SetConsoleCtrlHandler(ConsoleHandler, TRUE);
     InterfaceConsole();
     return 0;
 }
