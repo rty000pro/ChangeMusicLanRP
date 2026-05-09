@@ -50,40 +50,57 @@ void OpenGMAD() {
         ErrorWarning("Error: Extraction failed!");
     }
 }
+void ManualInstallationBase(std::string BaseGmodSet, std::string BaseSteamSet)
+{
+    BaseGmod = BaseGmodSet;
+    SuccesfullyWarning("Path Gmod [" + BaseGmod + "]  installating");
+    BaseSteam = BaseSteamSet;
+    SuccesfullyWarning("Path Steam [" + BaseSteam + "]  installating");
+}
 void InitListMusic()
 {
-    std::cout << "Init list..." << std::endl;
-    std::string TypeMusic;
-    OpenGMAD();
-    std::string SearchDir = baseDir + "/extracted/sound/lanrp/music/";
-    for (const auto& entry : fs::directory_iterator(SearchDir)) {
-        if (entry.is_directory()) {
-            TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
-            if (fs::is_empty(entry.path())) {
-                continue;
-            }
-            for (const auto& file : fs::directory_iterator(entry.path())) {
-                list_music[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
-                list_music_gma[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
-            }
-        }
-    }
-    if (fs::exists(MusicFolder))
+    if (!fs::exists(BaseSteam) && !fs::exists(BaseGmod))
     {
-        SearchDir = MusicFolder;
+        std::string SetSteam, SetGmod;
+        ErrorWarning("Warning! 'Vnimanie programma ne nashla pyt k gmod i steam, pozhalusta napishite k nim pyt' - by RusLanConnection :");
+        std::cin >> SetGmod >> SetSteam;
+        ManualInstallationBase(SetGmod, SetSteam);
+        InitListMusic();
+    }
+    else {
+        std::cout << "Init list..." << std::endl;
+        std::string TypeMusic;
+        OpenGMAD();
+        std::string SearchDir = baseDir + "/extracted/sound/lanrp/music/";
         for (const auto& entry : fs::directory_iterator(SearchDir)) {
             if (entry.is_directory()) {
-                TypeMusic = "\033[1m" + entry.path().filename().string()  + ":\033[0m";
+                TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
                 if (fs::is_empty(entry.path())) {
                     continue;
                 }
                 for (const auto& file : fs::directory_iterator(entry.path())) {
-                    list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
+                    list_music[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
+                    list_music_gma[TypeMusic].push_back("\033[90m" + file.path().filename().string() + "\033[0m");
                 }
             }
         }
+        if (fs::exists(MusicFolder))
+        {
+            SearchDir = MusicFolder;
+            for (const auto& entry : fs::directory_iterator(SearchDir)) {
+                if (entry.is_directory()) {
+                    TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
+                    if (fs::is_empty(entry.path())) {
+                        continue;
+                    }
+                    for (const auto& file : fs::directory_iterator(entry.path())) {
+                        list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
+                    }
+                }
+            }
+        }
+        IfTrueDirectoryFile();
     }
-    IfTrueDirectoryFile();
 }
 void InitNewList()
 {
@@ -93,16 +110,19 @@ void InitNewList()
             list_music[section].push_back("\033[90m" + song + ":\033[0m");
         }
     }
-    std::string TypeMusic;
-    std::string SearchDir = MusicFolder;
-    for (const auto& entry : fs::directory_iterator(SearchDir)) {
-        if (entry.is_directory()) {
-            TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
-            if (fs::is_empty(entry.path())) {
-                continue;
-            }
-            for (const auto& file : fs::directory_iterator(entry.path())) {
-                list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
+    if (fs::exists(MusicFolder)) 
+    {
+        std::string TypeMusic;
+        std::string SearchDir = MusicFolder;
+        for (const auto& entry : fs::directory_iterator(SearchDir)) {
+            if (entry.is_directory()) {
+                TypeMusic = "\033[1m" + entry.path().filename().string() + ":\033[0m";
+                if (fs::is_empty(entry.path())) {
+                    continue;
+                }
+                for (const auto& file : fs::directory_iterator(entry.path())) {
+                    list_music[TypeMusic].push_back("\033[32m" + file.path().filename().string() + "\033[0m");
+                }
             }
         }
     }
@@ -126,6 +146,7 @@ void CreateDirMusic()
         for (auto pozor : { "/calm","/epic","/other","/tense" }) {
             fs::create_directories(MusicFolder + pozor);
         }
+        InitNewList();
         SuccesfullyWarning("Created folder Successfuly!");
     }
     else
@@ -144,6 +165,7 @@ void RemoveAllFolder()
                 }
             }
         }
+        InitNewList();
         SuccesfullyWarning("Remove successfuly!");
     }
     else 
@@ -175,13 +197,6 @@ void AddMusicInDirMusic(fs::path NameFolder, fs::path PathNameMusicFile)
         return;
     }
     InitNewList();
-}
-void ManualInstallationBase(std::string BaseGmodSet, std::string BaseSteamSet)
-{
-    BaseGmod = BaseGmodSet;
-    SuccesfullyWarning("Path Gmod [" + BaseGmod + "]  installating");
-    BaseSteam = BaseSteamSet;
-    SuccesfullyWarning("Path Steam [" + BaseSteam + "]  installating");
 }
 void DeleteMusicInDirMusic(std::string NameMusicalFile)
 {
